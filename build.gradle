@@ -38,7 +38,7 @@ repositories {
 }
 
 ext {
-    set('testcontainersVersion', "1.14.3")
+    set('testcontainersVersion', "1.15.0")
     set('ksqlVersion', "6.2.0-0")
 }
 
