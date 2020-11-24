@@ -21,17 +21,35 @@ configurations {
 }
 
 repositories {
+    maven {
+        url "https://packages.confluent.io/maven/"
+    }
+
+    maven {
+        url "https://s3-us-west-2.amazonaws.com/confluent-snapshots/"
+    }
+
     mavenCentral()
+
+    // for com.github.everit-org.json-schema:org.everit.json.schema:1.12.1
+    maven {
+        url "https://repository.mulesoft.org/nexus/content/repositories/public/"
+    }
 }
 
 ext {
     set('testcontainersVersion', "1.14.3")
+    set('ksqlVersion', "6.2.0-0")
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-batch'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation ("io.confluent.ksql:ksqldb-rest-client:${ksqlVersion}") {
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'org.eclipse.jetty', module: 'jetty-server'
+    }
 
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
@@ -57,4 +75,7 @@ dependencyManagement {
 
 test {
     useJUnitPlatform()
+}
+
+bootJar {
 }
