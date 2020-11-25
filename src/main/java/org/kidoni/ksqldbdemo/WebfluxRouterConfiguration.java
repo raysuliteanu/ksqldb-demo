@@ -13,19 +13,19 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 @EnableWebFlux
 @Configuration
 public class WebfluxRouterConfiguration {
-    @Bean
-    public KsqlDbRequestHandler ksqlDbRequestHandler(KsqlRestClient ksqlRestClient) {
-        return new KsqlDbRequestHandler(ksqlRestClient);
-    }
+    public static final String DEFAULT_SERVER_ADDRESS = "http://localhost:8088";
 
     @Bean
-    public RouterFunction<ServerResponse> helloRouterFunction(KsqlDbRequestHandler ksqlDbRequestHandler) {
+    public RouterFunction<ServerResponse> infoRouterFunction(KsqlDbRequestHandler ksqlDbRequestHandler) {
         return RouterFunctions.route()
                               .GET("/info", ksqlDbRequestHandler::info)
                               .build();
     }
 
-    public static final String DEFAULT_SERVER_ADDRESS = "http://localhost:8088";
+    @Bean
+    public KsqlDbRequestHandler ksqlDbRequestHandler(KsqlRestClient ksqlRestClient) {
+        return new KsqlDbRequestHandler(ksqlRestClient);
+    }
 
     @Bean
     public KsqlRestClient ksqlRestClient() {
