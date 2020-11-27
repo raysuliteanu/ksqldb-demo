@@ -19,6 +19,7 @@ public class WebfluxRouterConfiguration {
     public RouterFunction<ServerResponse> infoRouterFunction(KsqlDbRequestHandler ksqlDbRequestHandler) {
         return RouterFunctions.route()
                               .GET("/info", ksqlDbRequestHandler::info)
+                              .POST("/stream", ksqlDbRequestHandler::createStream)
                               .build();
     }
 
