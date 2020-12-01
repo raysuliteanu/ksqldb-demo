@@ -5,7 +5,9 @@ import io.confluent.ksql.rest.client.RestResponse;
 import io.confluent.ksql.rest.entity.KsqlEntityList;
 import io.confluent.ksql.rest.entity.KsqlErrorMessage;
 import io.confluent.ksql.rest.entity.ServerInfo;
+import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.StringUtils;
@@ -18,7 +20,10 @@ import static java.lang.String.format;
 @Slf4j
 public class KsqlDbRequestHandler {
     static final String REQUEST_SUCCESS_MESSAGE = "request processed successfully";
-    static final String CREATE_STREAM_STATEMENT = "CREATE STREAM %s AS SELECT %s FROM %s EMIT CHANGES";
+
+    // see https://docs.ksqldb.io/en/latest/developer-guide/ksqldb-reference/create-stream/
+    static final String CREATE_STREAM_STATEMENT = "CREATE STREAM %s AS SELECT %s FROM %s EMIT CHANGES;";
+    static final String CREATE_STREAM_AND_TOPIC_STATEMENT = "CREATE STREAM %s (%s) WITH (%s);";
 
     private final KsqlRestClient ksqlRestClient;
 
@@ -50,8 +55,9 @@ public class KsqlDbRequestHandler {
     }
 
     RestResponse<KsqlEntityList> executeCreateStreamRequest(CreateStreamRequest createStreamRequest) {
-        String ksql = format(CREATE_STREAM_STATEMENT,
-                createStreamRequest.streamName, generateColumns(createStreamRequest.columns), createStreamRequest.sourceTopicName);
+        String ksql = createStreamRequest.isCreateTopic() ?
+                format(CREATE_STREAM_AND_TOPIC_STATEMENT, createStreamRequest.streamName, generateColumns(createStreamRequest, true), generateTopicProperties(createStreamRequest)) :
+                format(CREATE_STREAM_STATEMENT, createStreamRequest.streamName, generateColumns(createStreamRequest, false), createStreamRequest.sourceTopicName);
         return ksqlRestClient.makeKsqlRequest(ksql);
     }
 
@@ -60,7 +66,19 @@ public class KsqlDbRequestHandler {
         return new RequestStatus(message, restResponse.getResponse());
     }
 
-    private String generateColumns(Map<String, String> columns) {
-        return StringUtils.collectionToCommaDelimitedString(columns.keySet());
+    private String generateTopicProperties(CreateStreamRequest createStreamRequest) {
+        return format("kafka_topic = '%s', partitions = %d, value_format = '%s'",
+                createStreamRequest.getSourceTopicName(), createStreamRequest.getPartitions(), createStreamRequest.getValueFormat());
+    }
+
+    private String generateColumns(CreateStreamRequest createStreamRequest, boolean withTypes) {
+        Map<String, String> columns = createStreamRequest.getColumns();
+        return StringUtils.collectionToCommaDelimitedString(withTypes ? columnsWithTypes(columns, createStreamRequest.getKeyColumn()) : columns.keySet());
+    }
+
+    private Collection<String> columnsWithTypes(Map<String, String> columns, String keyColumn) {
+        return columns.entrySet().stream()
+                      .map(entry -> entry.getKey() + " " + entry.getValue() + (entry.getKey().equalsIgnoreCase(keyColumn) ? " KEY" : ""))
+                      .collect(Collectors.toUnmodifiableList());
     }
 }
