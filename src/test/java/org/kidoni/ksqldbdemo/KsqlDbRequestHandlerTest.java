@@ -52,21 +52,25 @@ class KsqlDbRequestHandlerTest {
         KsqlEntityList ksqlEntities = new KsqlEntityList(emptyList());
         RestResponse<KsqlEntityList> restResponse = successful(OK.value(), ksqlEntities);
 
-        given(ksqlRestClient.makeKsqlRequest(eq("CREATE STREAM test AS SELECT first,second FROM input EMIT CHANGES;"))).willReturn(restResponse);
+        String expectedSql = "CREATE STREAM test (first int,second string) WITH (kafka_topic = 'input', partitions = 1, value_format = 'json');";
+        given(ksqlRestClient.makeKsqlRequest(eq(expectedSql))).willReturn(restResponse);
 
         CreateStreamRequest createStreamRequest = new CreateStreamRequest();
+        createStreamRequest.setCreateTopic(true);
         createStreamRequest.setStreamName("test");
         createStreamRequest.setSourceTopicName("input");
+        createStreamRequest.setPartitions(1);
+        createStreamRequest.setValueFormat("json");
         Map<String, String> columns = new HashMap<>();
         columns.put("first", "int");
         columns.put("second", "string");
         createStreamRequest.setColumns(columns);
 
         webTestClient.post()
-                     .uri("/stream")
-                     .bodyValue(createStreamRequest)
-                     .exchange()
-                     .expectStatus().isOk()
+                .uri("/stream")
+                .bodyValue(createStreamRequest)
+                .exchange()
+                .expectStatus().isOk()
                      .expectBody(RequestStatus.class)
                      .value(equalTo(new RequestStatus(KsqlDbRequestHandler.REQUEST_SUCCESS_MESSAGE, ksqlEntities)));
     }

@@ -55,10 +55,14 @@ public class KsqlDbRequestHandler {
     }
 
     RestResponse<KsqlEntityList> executeCreateStreamRequest(CreateStreamRequest createStreamRequest) {
-        String ksql = createStreamRequest.isCreateTopic() ?
+        String ksql = formatRequest(createStreamRequest);
+        return ksqlRestClient.makeKsqlRequest(ksql);
+    }
+
+    private String formatRequest(final CreateStreamRequest createStreamRequest) {
+        return createStreamRequest.isCreateTopic() ?
                 format(CREATE_STREAM_AND_TOPIC_STATEMENT, createStreamRequest.streamName, generateColumns(createStreamRequest, true), generateTopicProperties(createStreamRequest)) :
                 format(CREATE_STREAM_STATEMENT, createStreamRequest.streamName, generateColumns(createStreamRequest, false), createStreamRequest.sourceTopicName);
-        return ksqlRestClient.makeKsqlRequest(ksql);
     }
 
     RequestStatus buildRequestStatus(RestResponse<KsqlEntityList> restResponse) {
