@@ -3,9 +3,6 @@ package org.kidoni.ksqldbdemo;
 import io.confluent.ksql.rest.client.KsqlRestClient;
 import io.confluent.ksql.rest.client.RestResponse;
 import io.confluent.ksql.rest.entity.KsqlEntityList;
-import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +13,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
+
+import java.time.Duration;
 
 import static io.confluent.ksql.rest.client.RestResponse.successful;
 import static java.util.Collections.emptyList;
@@ -39,7 +38,7 @@ class KsqlDbRequestHandlerTest {
     private WebTestClient webTestClient;
 
     @BeforeEach
-    private void setup() {
+    void setup() {
         webTestClient = bindToRouterFunction(routerFunction)
                 .configureClient()
                 // need some time if using a debugger ...
@@ -55,16 +54,7 @@ class KsqlDbRequestHandlerTest {
         String expectedSql = "CREATE STREAM test (first int,second string) WITH (kafka_topic = 'input', partitions = 1, value_format = 'json');";
         given(ksqlRestClient.makeKsqlRequest(eq(expectedSql))).willReturn(restResponse);
 
-        CreateStreamRequest createStreamRequest = new CreateStreamRequest();
-        createStreamRequest.setCreateTopic(true);
-        createStreamRequest.setStreamName("test");
-        createStreamRequest.setSourceTopicName("input");
-        createStreamRequest.setPartitions(1);
-        createStreamRequest.setValueFormat("json");
-        Map<String, String> columns = new HashMap<>();
-        columns.put("first", "int");
-        columns.put("second", "string");
-        createStreamRequest.setColumns(columns);
+        CreateStreamRequest createStreamRequest = RequestGenerator.generateCreateStreamRequest();
 
         webTestClient.post()
                 .uri("/stream")

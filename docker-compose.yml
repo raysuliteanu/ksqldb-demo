@@ -52,3 +52,14 @@ services:
             - ksqldb-server
         entrypoint: /bin/sh
         tty: true
+
+    ksqldb-demo:
+        image: ksqldb-demo:0.0.1-SNAPSHOT
+        hostname: ksqldb-demo
+        container_name: ksqldb-demo
+        depends_on:
+            - ksqldb-server
+        ports:
+            - "8888:8888"
+        environment:
+            SPRING_PROFILES_ACTIVE: "docker"

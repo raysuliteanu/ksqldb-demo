@@ -1,0 +1,6 @@
+org:
+  kidoni:
+    ksqldb:
+      ksql-db-server: "http://ksqldb-server:8088"
+server:
+  port: 8888

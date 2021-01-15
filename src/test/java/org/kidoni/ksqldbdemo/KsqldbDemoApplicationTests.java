@@ -1,8 +1,5 @@
 package org.kidoni.ksqldbdemo;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +12,8 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.File;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -25,7 +24,7 @@ import static org.hamcrest.Matchers.equalTo;
 @SpringBootTest
 class KsqldbDemoApplicationTests {
     @Container
-    private final static DockerComposeContainer dockerComposeContainer =
+    private final static DockerComposeContainer<?> dockerComposeContainer =
             new DockerComposeContainer<>(new File("src/test/resources/compose-test.yml"))
                     .withServices("zookeeper", "broker", "ksqldb-server")
                     .withExposedService("ksqldb-server", 8088, Wait.forHealthcheck())
@@ -51,17 +50,7 @@ class KsqldbDemoApplicationTests {
 
     @Test
     void createStreamRequest() {
-        CreateStreamRequest createStreamRequest = new CreateStreamRequest();
-        createStreamRequest.setStreamName("test");
-        createStreamRequest.setSourceTopicName(TEST_TOPIC_NAME);
-        Map<String, String> columns = new HashMap<>();
-        columns.put("first", "int");
-        columns.put("second", "string");
-        createStreamRequest.setColumns(columns);
-        createStreamRequest.setCreateTopic(true);
-        createStreamRequest.setKeyColumn("first");
-        createStreamRequest.setPartitions(3);
-        createStreamRequest.setValueFormat("json");
+        CreateStreamRequest createStreamRequest = RequestGenerator.generateCreateStreamRequest();
 
         webTestClient.post()
                      .uri("/stream")
