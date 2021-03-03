@@ -3,7 +3,7 @@ version: '2'
 
 services:
     zookeeper:
-        image: confluentinc/cp-zookeeper:5.5.1
+        image: confluentinc/cp-zookeeper:6.0.2
         hostname: zookeeper
         container_name: zookeeper
         ports:
@@ -13,7 +13,7 @@ services:
             ZOOKEEPER_TICK_TIME: 2000
 
     broker:
-        image: confluentinc/cp-enterprise-kafka:5.5.1
+        image: confluentinc/cp-enterprise-kafka:6.0.2
         hostname: broker
         container_name: broker
         depends_on:
@@ -31,7 +31,7 @@ services:
             KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
     ksqldb-server:
-        image: confluentinc/ksqldb-server:0.12.0
+        image: confluentinc/ksqldb-server:0.15.0
         hostname: ksqldb-server
         container_name: ksqldb-server
         depends_on:
@@ -45,7 +45,7 @@ services:
             KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
 
     ksqldb-cli:
-        image: confluentinc/ksqldb-cli:0.12.0
+        image: confluentinc/ksqldb-cli:0.15.0
         container_name: ksqldb-cli
         depends_on:
             - broker
@@ -54,7 +54,7 @@ services:
         tty: true
 
     ksqldb-demo:
-        image: ksqldb-demo:0.0.1-SNAPSHOT
+        image: kidoni.org/ksqldb-demo:0.0.1-SNAPSHOT
         hostname: ksqldb-demo
         container_name: ksqldb-demo
         depends_on:

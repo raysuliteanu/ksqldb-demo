@@ -5,8 +5,9 @@ buildscript {
 }
 
 plugins {
-    id 'org.springframework.boot' version '2.4.0'
+    id 'org.springframework.boot' version '2.4.3'
     id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id "com.gorylenko.gradle-git-properties" version "2.2.4"
     id 'java'
 }
 
@@ -39,7 +40,7 @@ repositories {
 
 ext {
     set('testcontainersVersion', "1.15.0")
-    set('ksqlVersion', "6.2.0-0")
+    set('ksqlVersion', "7.0.0-0")
 }
 
 dependencies {
@@ -78,5 +79,33 @@ test {
     useJUnitPlatform()
 }
 
+springBoot {
+    buildInfo {
+        properties {
+            // for repeatable builds, don't let the time value be dynamic; set to null or specific value
+            build {
+                time = null
+            }
+        }
+    }
+}
+
+bootBuildImage {
+    imageName = "kidoni.org/${project.name}:${project.version}"
+}
+
+bootRun {
+    systemProperty 'spring.profiles.active', "${System.properties['spring.profiles.active'] ?: 'debug'}"
+}
+
 bootJar {
+}
+
+gitProperties {
+    keys = [
+            'git.branch',
+            'git.commit.id',
+            'git.commit.time',
+            'git.tags'
+    ]
 }

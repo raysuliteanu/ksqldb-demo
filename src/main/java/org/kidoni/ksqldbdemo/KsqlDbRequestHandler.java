@@ -7,16 +7,18 @@ import io.confluent.ksql.rest.entity.KsqlErrorMessage;
 import io.confluent.ksql.rest.entity.ServerInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
+import static java.lang.System.currentTimeMillis;
+import static java.util.stream.Collectors.toUnmodifiableList;
+import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
+import static org.springframework.web.reactive.function.server.ServerResponse.ok;
 
 @Slf4j
 public class KsqlDbRequestHandler {
@@ -36,10 +38,10 @@ public class KsqlDbRequestHandler {
         RestResponse<ServerInfo> serverInfo = ksqlRestClient.getServerInfo();
         if (serverInfo.isSuccessful()) {
             ServerInfo serverInfoResponse = serverInfo.getResponse();
-            return ServerResponse.ok().bodyValue(format("cluster_id: %s, ksql_service_id: %s, server_status: %s, version: %s",
-                    serverInfoResponse.getKafkaClusterId(), serverInfoResponse.getKsqlServiceId(), serverInfoResponse.getServerStatus(), serverInfoResponse.getVersion()));
-        }
-        else {
+            return ok()
+                    .bodyValue(format("timestamp: %d, cluster_id: %s, ksql_service_id: %s, server_status: %s, version: %s",
+                            currentTimeMillis(), serverInfoResponse.getKafkaClusterId(), serverInfoResponse.getKsqlServiceId(), serverInfoResponse.getServerStatus(), serverInfoResponse.getVersion()));
+        } else {
             KsqlErrorMessage errorMessage = serverInfo.getErrorMessage();
             String body = format("Error: %s Code: %s", errorMessage.getMessage(), errorMessage.getErrorCode());
             return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue(body);
@@ -52,7 +54,7 @@ public class KsqlDbRequestHandler {
                 .map(this::executeCreateStreamRequest)
                 .map(this::buildRequestStatus);
 
-        return ServerResponse.ok().body(result, RequestStatus.class);
+        return ok().body(result, RequestStatus.class);
     }
 
     RestResponse<KsqlEntityList> executeCreateStreamRequest(CreateStreamRequest createStreamRequest) {
@@ -78,12 +80,12 @@ public class KsqlDbRequestHandler {
 
     private String generateColumns(CreateStreamRequest createStreamRequest, boolean withTypes) {
         Map<String, String> columns = createStreamRequest.getColumns();
-        return StringUtils.collectionToCommaDelimitedString(withTypes ? columnsWithTypes(columns, createStreamRequest.getKeyColumn()) : columns.keySet());
+        return collectionToCommaDelimitedString(withTypes ? columnsWithTypes(columns, createStreamRequest.getKeyColumn()) : columns.keySet());
     }
 
     private Collection<String> columnsWithTypes(Map<String, String> columns, String keyColumn) {
         return columns.entrySet().stream()
-                      .map(entry -> entry.getKey() + " " + entry.getValue() + (entry.getKey().equalsIgnoreCase(keyColumn) ? " KEY" : ""))
-                      .collect(Collectors.toUnmodifiableList());
+                .map(entry -> entry.getKey() + " " + entry.getValue() + (entry.getKey().equalsIgnoreCase(keyColumn) ? " KEY" : ""))
+                .collect(toUnmodifiableList());
     }
 }
